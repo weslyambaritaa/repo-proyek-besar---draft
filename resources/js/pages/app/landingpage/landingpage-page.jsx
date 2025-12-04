@@ -462,6 +462,7 @@ export default function LandingPage({ auth, banners, contentData, degreeOptions,
                 openDialog={isCampusOpen} 
                 setOpenDialog={setIsCampusOpen} 
                 dataDetail={selectedCampus} 
+                auth={auth}
             />
 
             {/* 3. Dialog Perusahaan */}

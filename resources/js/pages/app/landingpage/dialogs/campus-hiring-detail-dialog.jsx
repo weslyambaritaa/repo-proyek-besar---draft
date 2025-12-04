@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
 
-export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail }) {
+export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail, auth }) {
     if (!dataDetail) return null;
 
     const toGMT7 = (date) => dayjs(date).add(7, "hour");
@@ -28,13 +28,19 @@ export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail
         educationBadges = ["-"];
     }
 
-    // 🟦 Handler untuk tombol daftar
     const handleDaftar = () => {
-        // if (dataDetail?.link_pendaftaran) {
-        //     window.open(dataDetail.link_pendaftaran, "_blank");
-        // } else {
-        //     alert("Link pendaftaran tidak tersedia.");
-        // }
+        // Cek apakah user sudah login
+        if (!auth) {
+            alert("Silakan login terlebih dahulu untuk mendaftar.");
+            return;
+        }
+
+        // Cek username khusus
+        if (auth.username === 'ifs23041') {
+            alert("Akun Anda cocok. Anda BISA mendaftar!");
+        } else {
+            alert("Akun Anda tidak cocok. Anda TIDAK BISA mendaftar.");
+        }
     };
 
     return (

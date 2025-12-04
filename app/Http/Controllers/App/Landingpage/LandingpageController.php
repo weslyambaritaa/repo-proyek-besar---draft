@@ -20,13 +20,15 @@ class LandingpageController extends Controller
     public function index(Request $request)
     {
         // 1. AUTH CHECK (PUBLIC MODE)
-        $user = Auth::user(); 
-        
-        $authData = $user ? [
-            'id' => $user->id,
-            'nama' => $user->nama ?? $user->name,
-            'role' => $user->role ?? 'user',
-            'akses' => $user->akses ?? [], 
+        $auth = $request->attributes->get('auth');
+
+        $authData = $auth ? [
+            'id'       => $auth->id,
+            'nama'     => $auth->name,            // Sesuai dump: field "name"
+            'username' => $auth->username,
+            'role'     => $auth->alias ?? 'user', // Sesuai dump: field "alias" ("Mahasiswa") cocok untuk role
+            'akses'    => $auth->akses ?? [],     // Sesuai dump: array akses yang sudah di-explode di middleware
+            'photo'    => $auth->photo ?? null,   // Opsional: ditambahkan karena tersedia di dump
         ] : null;
 
         // 2. PARAMETER FILTER

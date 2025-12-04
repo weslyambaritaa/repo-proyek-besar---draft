@@ -36,6 +36,12 @@ class CheckAuthMiddleware
         $akses = HakAksesModel::where('user_id', $auth->id)->first();
         $auth->akses = isset($akses->akses) ? explode(',', $akses->akses) : [];
 
+        if (! in_array('Admin', $auth->akses)) {
+            // PERBAIKAN: Jika bukan Admin, redirect ke landing page
+            // Opsional: Anda bisa menambahkan ->with('error', '...') jika ingin menampilkan pesan
+            return redirect()->route('landing.index');
+        }
+
         $request->attributes->set('auth', $auth);
 
         return $next($request);
