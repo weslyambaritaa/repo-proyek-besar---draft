@@ -14,8 +14,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
 
     // [PERBAIKAN] Ubah nama route menjadi 'landing.index' agar sesuai dengan AuthController
-    Route::get('/', [LandingpageController::class, 'index'])->name('landing.index');
+    // Route::get('/', [LandingpageController::class, 'index'])->name('landing.index');
 
+    Route::get('/', [LandingpageController::class, 'index'])
+    ->middleware([\App\Http\Middleware\OptionalAuthMiddleware::class]) // Pasang middleware baru di sini
+    ->name('landing.index');
+    
     // SSO Routes
     Route::group(['prefix' => 'sso'], function () {
         Route::get('/callback', [AuthController::class, 'ssoCallback'])->name('sso.callback');
@@ -38,6 +42,7 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
 
     // Protected Routes
     Route::group(['middleware' => 'check.auth'], function () {
+        // Route::get('/', [LandingpageController::class, 'index'])->name('home');
         // Route untuk Dashboard Admin (Pastikan nama route 'home' ada)
         Route::get('/dashboard', [HomeController::class, 'index'])->name('home');
 

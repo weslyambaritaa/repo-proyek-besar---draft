@@ -22,9 +22,9 @@ export function PerusahaanDetailDialog({
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
             <DialogContent aria-describedby={undefined} className="sm:max-w-[500px] p-0 overflow-hidden gap-0">
                 {/* === HEADER BIRU SEPERTI REFERENSI === */}
-                <div className="bg-blue-500 p-6 text-white">
+                <div className="bg-white-500 p-6 text-white">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold text-white">
+                        <DialogTitle className="text-2xl font-bold text-black">
                             {dataDetail.nama}
                         </DialogTitle>
                         {/* Sub-header / Badges */}

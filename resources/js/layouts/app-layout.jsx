@@ -71,7 +71,12 @@ export default function AppLayout({ children }) {
                     title: "Campus Hiring",
                     url: route("campus-hiring"),
                     icon: Icon.IconCertificate, 
-                }
+                },
+                {
+                    title: "Landingpage",
+                    url: route("landing.index"),
+                    icon: Icon.IconDeviceDesktopAnalytics,
+                },
             ],
         },
         {

@@ -13,7 +13,7 @@ class HomeController extends Controller
     {
         $auth = $request->attributes->get('auth');
         $authToken = ToolsHelper::getAuthToken();
-        dd($auth);
+        // dd($auth);
 
         return Inertia::render('app/home/home-page', [
             'auth' => Inertia::always($auth),

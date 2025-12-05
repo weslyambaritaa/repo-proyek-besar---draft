@@ -94,10 +94,12 @@ export function CampusHiringChangeDialog({
     const safeList = (arr) => (arr?.data ? arr.data : arr || []);
     const today = new Date().toISOString().split("T")[0];
 
-    return (
+return (
         <Sheet open={openDialog} onOpenChange={setOpenDialog}>
-            <SheetContent className="w-[95vw] max-w-[900px] ">
+            {/* 1. Container Utama: Flex column & tinggi penuh agar header/footer bisa di-fix */}
+            <SheetContent className="w-[95vw] max-w-[900px] flex flex-col h-full">
 
+                {/* HEADER: Akan tetap diam di atas */}
                 <SheetHeader className="pb-4">
                     <SheetTitle>{dialogTitle}</SheetTitle>
                     <SheetDescription>
@@ -106,216 +108,218 @@ export function CampusHiringChangeDialog({
                 </SheetHeader>
 
                 <Separator className="border-b mb-4" />
-                <div className="grid flex-1 auto-rows-min gap-6 px-4 overflow-y-auto">
-                    <form onSubmit={handleSubmit}>
-                        <div className="grid gap-4 py-4">
 
-                            {/* Nama Campus Hiring */}
-                            <div className="grid gap-2">
-                                <Label>Nama Campus Hiring</Label>
-                                <Input
-                                    value={data.nama_campus_hiring}
-                                    onChange={(e) =>
-                                        setData("nama_campus_hiring", e.target.value)
-                                    }
-                                    placeholder="Contoh: Campus Hiring Backend Engineer"
-                                />
-                                {errors.nama_campus_hiring && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.nama_campus_hiring}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Perusahaan */}
-                            <div className="grid gap-2">
-                                <Label>Nama Perusahaan</Label>
-                                <Select
-                                    value={data.id_perusahaan}
-                                    onValueChange={(v) =>
-                                        setData("id_perusahaan", v)
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Perusahaan" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            {safeList(perusahaanList).map((p) => (
-                                                <SelectItem
-                                                    key={p.id_perusahaan}
-                                                    value={p.id_perusahaan}
-                                                >
-                                                    {p.nama}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                                {errors.id_perusahaan && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.id_perusahaan}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Departemen */}
-                            <div className="grid gap-2">
-                                <Label>Departemen</Label>
-                                <Input
-                                    value={data.departemen}
-                                    onChange={(e) =>
-                                        setData("departemen", e.target.value)
-                                    }
-                                    placeholder="Contoh: Human Capital, IT Division"
-                                />
-                                {errors.departemen && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.departemen}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Jenis Lowongan */}
-                            <div className="grid gap-2">
-                                <Label>Jenis Lowongan</Label>
-                                <Select
-                                    value={data.jenis_lowongan}
-                                    onValueChange={(v) =>
-                                        setData("jenis_lowongan", v)
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Jenis Lowongan" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            {safeList(jenisLowonganList).map((jenis) => (
-                                                <SelectItem key={jenis} value={jenis}>
-                                                    {jenis}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                                {errors.jenis_lowongan && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.jenis_lowongan}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Deskripsi */}
-                            <div className="grid gap-2">
-                                <Label>Deskripsi</Label>
-                                <Textarea
-                                    rows={3}
-                                    value={data.deskripsi}
-                                    onChange={(e) =>
-                                        setData("deskripsi", e.target.value)
-                                    }
-                                    placeholder="Jelaskan informasi mengenai program campus hiring..."
-                                />
-                                {errors.deskripsi && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.deskripsi}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Kualifikasi */}
-                            <div className="grid gap-2">
-                                <Label>Kualifikasi</Label>
-                                <Textarea
-                                    rows={3}
-                                    value={data.kualifikasi}
-                                    onChange={(e) =>
-                                        setData("kualifikasi", e.target.value)
-                                    }
-                                    placeholder="Skill, pengalaman, atau syarat lainnya..."
-                                />
-                                {errors.kualifikasi && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.kualifikasi}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Benefit */}
-                            <div className="grid gap-2">
-                                <Label>Benefit</Label>
-                                <Textarea
-                                    rows={2}
-                                    value={data.benefit}
-                                    onChange={(e) =>
-                                        setData("benefit", e.target.value)
-                                    }
-                                    placeholder="Fasilitas, tunjangan, dan benefit lain..."
-                                />
-                                {errors.benefit && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.benefit}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Kualifikasi Pendidikan */}
-                            <div className="grid gap-2">
-                                <Label>Kualifikasi Pendidikan</Label>
-                                <div className="flex flex-wrap gap-3">
-                                    {pendidikanOptions.map((opt) => (
-                                        <label
-                                            key={opt}
-                                            className="flex items-center space-x-2"
-                                        >
-                                            <Checkbox
-                                                checked={data.kualifikasi_pendidikan.includes(opt)}
-                                                onCheckedChange={() => togglePendidikan(opt)}
-                                            />
-                                            <span>{opt}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                                {errors.kualifikasi_pendidikan && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.kualifikasi_pendidikan}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Batas Akhir */}
-                            <div className="grid gap-2">
-                                <Label>Batas Akhir Pendaftaran</Label>
-                                <Input
-                                    type="date"
-                                    min={today}
-                                    value={data.batas_akhir}
-                                    onChange={(e) => setData("batas_akhir", e.target.value)}
-                                />
-                                {errors.batas_akhir && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.batas_akhir}
-                                    </p>
-                                )}
-                            </div>
-
-                        </div>
-                    </form>
-                    </div>
-                        <SheetFooter>
-                            <Button type="submit" disabled={processing}>
-                                {processing ? "Menyimpan..." : "Simpan"}
-                            </Button>
-
-                            <SheetClose asChild>
-                                <Button variant="outline" disabled={processing}>
-                                    Batal
-                                </Button>
-                            </SheetClose>
-                        </SheetFooter>
+                {/* 2. Form Wrapper: Mengisi sisa ruang (flex-1) & membatasi overflow */}
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                     
-                
+                    {/* 3. Area Scrollable: Hanya div ini yang bisa di-scroll */}
+                    <div className="grid flex-1 auto-rows-min gap-6 px-4 overflow-y-auto">
 
+                        {/* Nama Campus Hiring */}
+                        <div className="grid gap-2">
+                            <Label>Nama Campus Hiring</Label>
+                            <Input
+                                value={data.nama_campus_hiring}
+                                onChange={(e) =>
+                                    setData("nama_campus_hiring", e.target.value)
+                                }
+                                placeholder="Contoh: Campus Hiring Backend Engineer"
+                            />
+                            {errors.nama_campus_hiring && (
+                                <p className="text-sm text-red-600">
+                                    {errors.nama_campus_hiring}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Perusahaan */}
+                        <div className="grid gap-2">
+                            <Label>Nama Perusahaan</Label>
+                            <Select
+                                value={data.id_perusahaan}
+                                onValueChange={(v) =>
+                                    setData("id_perusahaan", v)
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Perusahaan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {safeList(perusahaanList).map((p) => (
+                                            <SelectItem
+                                                key={p.id_perusahaan}
+                                                value={p.id_perusahaan}
+                                            >
+                                                {p.nama}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.id_perusahaan && (
+                                <p className="text-sm text-red-600">
+                                    {errors.id_perusahaan}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Departemen */}
+                        <div className="grid gap-2">
+                            <Label>Departemen</Label>
+                            <Input
+                                value={data.departemen}
+                                onChange={(e) =>
+                                    setData("departemen", e.target.value)
+                                }
+                                placeholder="Contoh: Human Capital, IT Division"
+                            />
+                            {errors.departemen && (
+                                <p className="text-sm text-red-600">
+                                    {errors.departemen}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Jenis Lowongan */}
+                        <div className="grid gap-2">
+                            <Label>Jenis Lowongan</Label>
+                            <Select
+                                value={data.jenis_lowongan}
+                                onValueChange={(v) =>
+                                    setData("jenis_lowongan", v)
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Jenis Lowongan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {safeList(jenisLowonganList).map((jenis) => (
+                                            <SelectItem key={jenis} value={jenis}>
+                                                {jenis}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {errors.jenis_lowongan && (
+                                <p className="text-sm text-red-600">
+                                    {errors.jenis_lowongan}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Deskripsi */}
+                        <div className="grid gap-2">
+                            <Label>Deskripsi</Label>
+                            <Textarea
+                                rows={3}
+                                value={data.deskripsi}
+                                onChange={(e) =>
+                                    setData("deskripsi", e.target.value)
+                                }
+                                placeholder="Jelaskan informasi mengenai program campus hiring..."
+                            />
+                            {errors.deskripsi && (
+                                <p className="text-sm text-red-600">
+                                    {errors.deskripsi}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Kualifikasi */}
+                        <div className="grid gap-2">
+                            <Label>Kualifikasi</Label>
+                            <Textarea
+                                rows={3}
+                                value={data.kualifikasi}
+                                onChange={(e) =>
+                                    setData("kualifikasi", e.target.value)
+                                }
+                                placeholder="Skill, pengalaman, atau syarat lainnya..."
+                            />
+                            {errors.kualifikasi && (
+                                <p className="text-sm text-red-600">
+                                    {errors.kualifikasi}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Benefit */}
+                        <div className="grid gap-2">
+                            <Label>Benefit</Label>
+                            <Textarea
+                                rows={2}
+                                value={data.benefit}
+                                onChange={(e) =>
+                                    setData("benefit", e.target.value)
+                                }
+                                placeholder="Fasilitas, tunjangan, dan benefit lain..."
+                            />
+                            {errors.benefit && (
+                                <p className="text-sm text-red-600">
+                                    {errors.benefit}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Kualifikasi Pendidikan */}
+                        <div className="grid gap-2">
+                            <Label>Kualifikasi Pendidikan</Label>
+                            <div className="flex flex-wrap gap-3">
+                                {pendidikanOptions.map((opt) => (
+                                    <label
+                                        key={opt}
+                                        className="flex items-center space-x-2"
+                                    >
+                                        <Checkbox
+                                            checked={data.kualifikasi_pendidikan.includes(opt)}
+                                            onCheckedChange={() => togglePendidikan(opt)}
+                                        />
+                                        <span>{opt}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            {errors.kualifikasi_pendidikan && (
+                                <p className="text-sm text-red-600">
+                                    {errors.kualifikasi_pendidikan}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Batas Akhir */}
+                        <div className="grid gap-2">
+                            <Label>Batas Akhir Pendaftaran</Label>
+                            <Input
+                                type="date"
+                                min={today}
+                                value={data.batas_akhir}
+                                onChange={(e) => setData("batas_akhir", e.target.value)}
+                            />
+                            {errors.batas_akhir && (
+                                <p className="text-sm text-red-600">
+                                    {errors.batas_akhir}
+                                </p>
+                            )}
+                        </div>
+
+                    </div>
+
+                    {/* 4. FOOTER: Akan tetap diam di bawah */}
+                    <SheetFooter className="mt-4 pt-4 border-t">
+                        <Button type="submit" disabled={processing}>
+                            {processing ? "Menyimpan..." : "Simpan"}
+                        </Button>
+
+                        <SheetClose asChild>
+                            <Button variant="outline" disabled={processing}>
+                                Batal
+                            </Button>
+                        </SheetClose>
+                    </SheetFooter>
+                </form> 
+                
             </SheetContent>
         </Sheet>
     );

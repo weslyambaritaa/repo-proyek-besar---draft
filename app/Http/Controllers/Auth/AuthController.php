@@ -78,7 +78,11 @@ class AuthController extends Controller
     {
         ToolsHelper::setAuthToken('');
 
-        return Inertia::render('auth/logout-page');
+        // return Inertia::render('auth/logout-page');
+        return redirect()->route('landing.index');
+        // return Inertia::render('auth/app/landingpage-page');
+        
+        
     }
 
     // TOTP
@@ -140,7 +144,7 @@ class AuthController extends Controller
             ])->onlyInput('kodeOTP');
         }
 
-        return redirect()->route('home');
+        return redirect()->route('landing.index');
     }
 
     // // SSO Callback

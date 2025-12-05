@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,12 +32,13 @@ export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail
     const handleDaftar = () => {
         // Cek apakah user sudah login
         if (!auth) {
-            alert("Silakan login terlebih dahulu untuk mendaftar.");
+            // alert("Silakan login terlebih dahulu untuk mendaftar.");
+            router.get(route('auth.login'));
             return;
         }
 
         // Cek username khusus
-        if (auth.username === 'ifs23041') {
+        if (auth.username === 'ifs23022') {
             alert("Akun Anda cocok. Anda BISA mendaftar!");
         } else {
             alert("Akun Anda tidak cocok. Anda TIDAK BISA mendaftar.");
