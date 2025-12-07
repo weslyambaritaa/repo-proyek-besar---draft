@@ -16,6 +16,10 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
     // [PERBAIKAN] Ubah nama route menjadi 'landing.index' agar sesuai dengan AuthController
     // Route::get('/', [LandingpageController::class, 'index'])->name('landing.index');
 
+    Route::post('/apply-campus-hiring', [LandingpageController::class, 'storeLamaran'])
+        ->name('landing.lamar-campus-hiring')
+        ->middleware([\App\Http\Middleware\OptionalAuthMiddleware::class]);
+
     Route::get('/', [LandingpageController::class, 'index'])
     ->middleware([\App\Http\Middleware\OptionalAuthMiddleware::class]) // Pasang middleware baru di sini
     ->name('landing.index');
@@ -80,6 +84,9 @@ Route::middleware(['throttle:req-limit', 'handle.inertia'])->group(function () {
             Route::get('/', [CampusHiringController::class, 'index'])->name('campus-hiring');
             Route::post('/change', [CampusHiringController::class, 'postChange'])->name('campus-hiring.change-post');
             Route::post('/delete', [CampusHiringController::class, 'postDelete'])->name('campus-hiring.delete-post');
+            
+            // ROUTE BARU: Download Pendaftar
+            Route::get('/download/{id}', [CampusHiringController::class, 'downloadApplicants'])->name('campus-hiring.download');
         });
 
         // Banner Routes

@@ -7,6 +7,11 @@ use App\Helper\ToolsHelper;
 use App\Http\Controllers\Controller;
 use App\Models\CampusHiringModel;
 use App\Models\PerusahaanModel;
+use App\Models\LamaranCampusHiringModel; // Import Model Lamaran
+use PhpOffice\PhpSpreadsheet\Spreadsheet; // Import Spreadsheet
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx; // Import Writer Excel
+use PhpOffice\PhpSpreadsheet\Style\Alignment; // Import Styling Excel
+use Illuminate\Support\Str; // Import Helper Str (PENTING untuk Str::slug)
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -32,7 +37,6 @@ class CampusHiringController extends Controller
             ->when($search, function ($query) use ($search) {
                 $lower = strtolower($search);
                 $query->where(function ($q) use ($lower) {
-                    // Perubahan kolom pencarian sesuai Model baru
                     $q->whereRaw('LOWER(nama_campus_hiring) LIKE ?', ["%{$lower}%"])
                         ->orWhereRaw('LOWER(deskripsi) LIKE ?', ["%{$lower}%"])
                         ->orWhereRaw('LOWER(departemen) LIKE ?', ["%{$lower}%"]);
@@ -41,14 +45,10 @@ class CampusHiringController extends Controller
             ->orderByDesc('created_at')
             ->paginate($perPage);
 
-        // Path view disesuaikan (folder: app/campus-hiring)
         return Inertia::render('app/campus-hiring/campus-hiring-page', [
             'campusHiringList' => fn () => $campusHiringList,
             'perusahaanList' => PerusahaanModel::all(),
-
-            // Mengambil opsi statis dari CampusHiringModel
             'jenisLowonganList' => CampusHiringModel::getJenisOptions(),
-
             'pageName' => Inertia::always('Daftar Campus Hiring'),
             'auth' => Inertia::always($auth),
             'isEditor' => Inertia::always($isEditor),
@@ -68,29 +68,21 @@ class CampusHiringController extends Controller
             return back()->with('error', 'Anda tidak memiliki izin untuk mengolah data Campus Hiring.');
         }
 
-        // Ambil daftar opsi valid dari Model
         $validJenis = CampusHiringModel::getJenisOptions();
 
         $request->validate([
             'id_perusahaan' => 'required|string',
-
-            // Validasi jenis lowongan
             'jenis_lowongan' => ['required', 'string', Rule::in($validJenis)],
-
-            // Perubahan nama kolom validasi
             'nama_campus_hiring' => 'required|string|max:255',
-
             'departemen' => 'nullable|string|max:100',
             'deskripsi' => 'nullable|string',
             'kualifikasi' => 'nullable|string',
             'benefit' => 'nullable|string',
             'kualifikasi_pendidikan' => 'nullable|array',
             'batas_akhir' => 'nullable|date',
-            // 'link_pendaftaran' dihapus
         ]);
 
         // --- UPDATE MODE ---
-        // Menggunakan id_campus_hiring
         if (isset($request->id_campus_hiring) && ! empty($request->id_campus_hiring)) {
             $campusHiring = CampusHiringModel::where('id_campus_hiring', $request->id_campus_hiring)
                 ->where('id_admin_pembuat', $auth->id)
@@ -102,7 +94,7 @@ class CampusHiringController extends Controller
 
             $campusHiring->id_perusahaan = $request->id_perusahaan;
             $campusHiring->jenis_lowongan = $request->jenis_lowongan;
-            $campusHiring->nama_campus_hiring = $request->nama_campus_hiring; // Update kolom nama
+            $campusHiring->nama_campus_hiring = $request->nama_campus_hiring;
             $campusHiring->departemen = $request->departemen;
             $campusHiring->deskripsi = $request->deskripsi;
             $campusHiring->kualifikasi = $request->kualifikasi;
@@ -120,7 +112,7 @@ class CampusHiringController extends Controller
             'id_perusahaan' => $request->id_perusahaan,
             'id_admin_pembuat' => $auth->id,
             'jenis_lowongan' => $request->jenis_lowongan,
-            'nama_campus_hiring' => $request->nama_campus_hiring, // Create kolom nama
+            'nama_campus_hiring' => $request->nama_campus_hiring,
             'departemen' => $request->departemen,
             'deskripsi' => $request->deskripsi,
             'kualifikasi' => $request->kualifikasi,
@@ -142,7 +134,7 @@ class CampusHiringController extends Controller
         }
 
         $request->validate([
-            'ids_campus_hiring' => 'required|array', // Perubahan nama parameter
+            'ids_campus_hiring' => 'required|array',
         ]);
 
         CampusHiringModel::whereIn('id_campus_hiring', $request->ids_campus_hiring)
@@ -152,9 +144,69 @@ class CampusHiringController extends Controller
         return back()->with('success', 'Data Campus Hiring yang dipilih berhasil dihapus.');
     }
 
+    /**
+     * Download Excel Data Pelamar
+     */
+public function downloadApplicants($id)
+    {
+        // Tidak perlu "with('user')" karena nama diambil dari inputan manual
+        $lamaran = LamaranCampusHiringModel::where('id_campus_hiring', $id)
+            ->orderBy('tanggal_lamaran', 'desc')
+            ->get();
+            
+        $campusHiring = CampusHiringModel::find($id);
+        $namaJob = $campusHiring ? $campusHiring->nama_campus_hiring : 'Data';
+    
+        // Setup Spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+    
+        // Header Judul
+        $sheet->setCellValue('A1', 'Daftar Pelamar - ' . $namaJob);
+        $sheet->mergeCells('A1:D1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    
+        // Header Kolom
+        $headers = ['No', 'Nama Pelamar', 'Link CV', 'Waktu Mendaftar'];
+        $sheet->fromArray($headers, NULL, 'A3');
+        $sheet->getStyle('A3:D3')->getFont()->setBold(true);
+        $sheet->getStyle('A3:D3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    
+        // Isi Data
+        $row = 4;
+        foreach ($lamaran as $idx => $item) {
+            $sheet->setCellValue('A' . $row, $idx + 1);
+            
+            // AMBIL DARI INPUTAN MANUAL
+            $sheet->setCellValue('B' . $row, $item->nama_pelamar); 
+            
+            $sheet->setCellValue('C' . $row, $item->url_cv);
+            
+            // Waktu
+            $waktu = $item->tanggal_lamaran ? date('d/m/Y H:i', strtotime($item->tanggal_lamaran)) : '-';
+            $sheet->setCellValue('D' . $row, $waktu);
+            $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $row++;
+        }
+    
+        foreach (range('A', 'D') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+    
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'Pelamar_' . Str::slug($namaJob) . '_' . date('Y-m-d_His') . '.xlsx';
+    
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer->save('php://output');
+        exit;
+    }
     private function checkIsEditor($auth)
     {
-        // Sesuaikan string role dengan ConstHelper yang baru
         return ToolsHelper::checkRoles('Campus Hiring', $auth->akses);
     }
 }

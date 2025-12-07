@@ -361,19 +361,9 @@ export default function CampusHiringPage() {
                             <DropdownMenuItem
                                 className="text-green-500"
                                 onClick={() => {
-                                    setDataEdit({
-                                        id_campus_hiring: row.original.id_campus_hiring,
-                                        id_perusahaan: row.original.id_perusahaan,
-                                        jenis_lowongan: row.original.jenis_lowongan,
-                                        nama_campus_hiring: row.original.nama_campus_hiring,
-                                        departemen: row.original.departemen,
-                                        deskripsi: row.original.deskripsi,
-                                        kualifikasi: row.original.kualifikasi,
-                                        benefit: row.original.benefit,
-                                        kualifikasi_pendidikan: row.original.kualifikasi_pendidikan,
-                                        batas_akhir: row.original.batas_akhir,
-                                    });
-                                    setIsChangeDialogOpen(true);
+                                    // PERBAIKAN: Membuka route download di tab baru
+                                    const url = route('campus-hiring.download', { id: row.original.id_campus_hiring });
+                                    window.open(url, '_blank');
                                 }}
                             >
                                 <Icon.IconDownload

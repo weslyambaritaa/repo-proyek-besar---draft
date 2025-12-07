@@ -7,6 +7,8 @@ use App\Models\BannerModel;
 use App\Models\CampusHiringModel;
 use App\Models\LowonganPekerjaanModel;
 use App\Models\PerusahaanModel;
+use App\Models\LamaranCampusHiringModel;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -148,5 +150,36 @@ class LandingpageController extends Controller
             ],
             'contentData' => $contentData,
         ]);
+    }
+
+public function storeLamaran(Request $request)
+    {
+        $auth = $request->attributes->get('auth');
+        if (!$auth) {
+            return back()->with('error', 'Anda harus login.');
+        }
+
+        $request->validate([
+            'id_campus_hiring' => 'required|exists:t_campus_hiring,id_campus_hiring',
+            'nama_pelamar' => 'required|string|max:255', // Validasi Nama
+            'url_cv' => 'required|string|max:1000',
+        ]);
+
+        $exists = LamaranCampusHiringModel::where('id_campus_hiring', $request->id_campus_hiring)
+            ->where('user_id', $auth->id)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Anda sudah mendaftar di lowongan ini.');
+        }
+
+        LamaranCampusHiringModel::create([
+            'id_campus_hiring' => $request->id_campus_hiring,
+            'user_id' => $auth->id,
+            'nama_pelamar' => $request->nama_pelamar, // Simpan Nama Inputan
+            'url_cv' => $request->url_cv,
+        ]);
+
+        // return back()->with('success', 'Lamaran berhasil dikirim!');
     }
 }
