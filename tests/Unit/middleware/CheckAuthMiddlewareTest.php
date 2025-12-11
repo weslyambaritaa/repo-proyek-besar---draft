@@ -16,6 +16,7 @@ class CheckAuthMiddlewareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Pastikan Mockery bersih sebelum setiap test
         Mockery::close();
     }
 
@@ -37,7 +38,9 @@ class CheckAuthMiddlewareTest extends TestCase
 
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
-        $this->assertStringContainsString('auth/login', $response->getContent() ?: '');
+
+        // PERBAIKAN: Ubah ekspektasi ke auth.login sesuai logika middleware
+        $this->assertEquals(route('auth.login'), $response->getTargetUrl());
     }
 
     #[Test]
@@ -63,31 +66,33 @@ class CheckAuthMiddlewareTest extends TestCase
 
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
-        $this->assertStringContainsString('auth/login', $response->getContent() ?: '');
+        $this->assertStringContainsString('auth/login', $response->getTargetUrl());
     }
 
     #[Test]
-    public function melanjutkan_request_dengan_auth_data_jika_token_valid()
+    public function redirect_ke_landing_jika_bukan_admin()
     {
+        // KASUS: User Login, tapi TIDAK punya akses 'Admin'
+
         $userData = (object) [
-            'id' => '8357fda6-67f7-4a99-8f01-9847d6920599',
-            'name' => 'Test User',
+            'id' => 'user-biasa-id',
+            'name' => 'User Biasa',
         ];
 
-        ToolsHelper::setAuthToken('valid-token');
+        ToolsHelper::setAuthToken('valid-token-user');
 
         // Mock UserApi
         $userApiMock = Mockery::mock('alias:'.UserApi::class);
         $userApiMock
             ->shouldReceive('getMe')
-            ->with('valid-token')
+            ->with('valid-token-user')
             ->andReturn((object) [
                 'data' => (object) [
                     'user' => $userData,
                 ],
             ]);
 
-        // Mock HakAksesModel
+        // Mock HakAksesModel (Hanya punya akses view, edit TAPI TIDAK ADA Admin)
         $hakAksesMock = Mockery::mock('alias:'.HakAksesModel::class);
         $hakAksesMock
             ->shouldReceive('where')
@@ -99,44 +104,43 @@ class CheckAuthMiddlewareTest extends TestCase
             ->once()
             ->andReturn((object) ['akses' => 'view,edit']);
 
-        // Buat request & middleware
         $request = Request::create('/app/profile', 'GET');
         $middleware = new CheckAuthMiddleware;
 
-        // Jalankan handle()
-        $response = $middleware->handle($request, function ($req) {
-            // Assertion
-            $auth = $req->attributes->get('auth');
-            $this->assertEquals(['view', 'edit'], $auth->akses);
+        $response = $middleware->handle($request, function () {});
 
-            return response('Success', 200);
-        });
+        // ASSERT: Harus redirect (302) ke landing page
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertTrue($response->isRedirect());
 
-        $this->assertEquals(200, $response->getStatusCode());
+        // PERBAIKAN: Gunakan route() helper agar akurat, meskipun URLnya root (localhost:8000)
+        $this->assertEquals(route('landing.index'), $response->getTargetUrl());
     }
 
     #[Test]
-    public function melanjutkan_request_dengan_akses_kosong_jika_tidak_ada_hak_akses()
+    public function melanjutkan_request_jika_user_adalah_admin()
     {
+        // KASUS: Happy Path (User Login DAN punya akses 'Admin')
+
         $userData = (object) [
             'id' => '8357fda6-67f7-4a99-8f01-9847d6920599',
-            'name' => 'Test User',
+            'name' => 'Admin User',
         ];
 
-        ToolsHelper::setAuthToken('valid-token');
+        ToolsHelper::setAuthToken('valid-token-admin');
 
         // Mock UserApi
         $userApiMock = Mockery::mock('alias:'.UserApi::class);
         $userApiMock
             ->shouldReceive('getMe')
-            ->with('valid-token')
+            ->with('valid-token-admin')
             ->andReturn((object) [
                 'data' => (object) [
                     'user' => $userData,
                 ],
             ]);
 
-        // Mock HakAksesModel
+        // Mock HakAksesModel (Punya akses Admin)
         $hakAksesMock = Mockery::mock('alias:'.HakAksesModel::class);
         $hakAksesMock
             ->shouldReceive('where')
@@ -146,18 +150,24 @@ class CheckAuthMiddlewareTest extends TestCase
         $hakAksesMock
             ->shouldReceive('first')
             ->once()
-            ->andReturnNull();
+            ->andReturn((object) ['akses' => 'view,edit,Admin']);
 
         $request = Request::create('/app/profile', 'GET');
         $middleware = new CheckAuthMiddleware;
 
         $response = $middleware->handle($request, function ($req) {
+            // Assertion di dalam controller/next
             $auth = $req->attributes->get('auth');
-            $this->assertEquals([], $auth->akses);
+
+            // Pastikan array akses ter-explode dengan benar dan mengandung Admin
+            $this->assertContains('Admin', $auth->akses);
+            $this->assertContains('view', $auth->akses);
 
             return response('Success', 200);
         });
 
+        // ASSERT: Status harus 200 OK (Bukan redirect)
         $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('Success', $response->getContent());
     }
 }

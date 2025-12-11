@@ -24,6 +24,7 @@ class HakAksesController extends Controller
             // SELALU diperlukan, tapi LAZY loading
             'aksesList' => function () {
                 $aksesList = HakAksesModel::all();
+                // dd($aksesList);
 
                 $response = UserApi::postReqUsersByIds(
                     ToolsHelper::getAuthToken(),

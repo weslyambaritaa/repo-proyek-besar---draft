@@ -5,7 +5,6 @@ namespace App\Http\Controllers\App\LowonganPekerjaan;
 use App\Helper\ConstHelper;
 use App\Helper\ToolsHelper;
 use App\Http\Controllers\Controller;
-// use App\Models\JenisLowonganModel; // TIDAK DIPAKAI LAGI
 use App\Models\LowonganPekerjaanModel;
 use App\Models\PerusahaanModel;
 use Illuminate\Http\Request;

@@ -81,8 +81,7 @@ class AuthController extends Controller
         // return Inertia::render('auth/logout-page');
         return redirect()->route('landing.index');
         // return Inertia::render('auth/app/landingpage-page');
-        
-        
+
     }
 
     // TOTP

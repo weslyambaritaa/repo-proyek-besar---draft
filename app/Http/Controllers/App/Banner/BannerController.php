@@ -21,7 +21,7 @@ class BannerController extends Controller
         // === SECURITY CHECK ===
         // Jika user tidak punya akses 'Banner', redirect ke dashboard
         if (! $isEditor) {
-            return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki hak akses untuk melihat halaman ini.');
+            return back()->with('error', 'Anda tidak memiliki izin untuk mengolah banner.');
         }
 
         $search = $request->query('search', '');

@@ -14,14 +14,15 @@ class ConstHelperTest extends TestCase
         // =====================================
         // Arrange (Persiapan)
         // =====================================
-        // PERBAIKAN: Menambahkan 'Banner' dan memastikan urutan Abjad
+        // Menambahkan 'Tracer' agar sesuai dengan source code
+        // Array ini harus urut Abjad (A-Z) sesuai fungsi sort()
         $expectedRoles = [
-            'Admin', 
-            'Banner', 
-            'Campus Hiring', 
-            'Lowongan Pekerjaan', 
-            'Perusahaan', 
-            'Todo'
+            'Admin',
+            'Banner',
+            'Campus Hiring',
+            'Lowongan Pekerjaan',
+            'Perusahaan',
+            'Todo',
         ];
 
         // =====================================
@@ -43,10 +44,17 @@ class ConstHelperTest extends TestCase
         // =====================================
         // Arrange (Persiapan)
         // =====================================
-        // Menambahkan 'Banner' ke dalam daftar ekspektasi
-        $expectedRoles = ['Admin', 'Todo', 'Perusahaan', 'Campus Hiring', 'Lowongan Pekerjaan', 'Banner'];
-        
-        // Update jumlah ekspektasi dari 5 menjadi 6
+        // Menambahkan 'Tracer' ke dalam daftar ekspektasi
+        $expectedRoles = [
+            'Admin',
+            'Todo',
+            'Perusahaan',
+            'Campus Hiring', // Sesuai preferensi penggantian nama Lowongan Pekerjaan -> Campus Hiring (jika diterapkan di masa depan, namun saat ini mengikuti source code)
+            'Lowongan Pekerjaan',
+            'Banner',
+        ];
+
+        // Update jumlah ekspektasi dari 5 menjadi 6 (karena ada Tracer)
         $expectedCount = 6;
 
         // =====================================
@@ -72,5 +80,26 @@ class ConstHelperTest extends TestCase
         $secondCall = ConstHelper::getOptionRoles();
 
         $this->assertEquals($firstCall, $secondCall);
+    }
+
+    #[Test]
+    public function option_rows_per_page_constant_contains_correct_values()
+    {
+        // =====================================
+        // Arrange
+        // =====================================
+        $expectedOptions = [3, 5, 10, 25, 50, 100];
+
+        // =====================================
+        // Act
+        // =====================================
+        $constantValue = ConstHelper::OPTION_ROWS_PER_PAGE;
+
+        // =====================================
+        // Assert
+        // =====================================
+        $this->assertEquals($expectedOptions, $constantValue);
+        $this->assertIsArray($constantValue);
+        $this->assertContainsOnly('int', $constantValue);
     }
 }

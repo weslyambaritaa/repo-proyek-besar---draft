@@ -6,6 +6,7 @@ use App\Http\Controllers\App\Perusahaan\PerusahaanController;
 use App\Models\PerusahaanModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,11 +33,18 @@ class PerusahaanControllerTest extends TestCase
                 ]);
             });
 
-        // 2. Mock PerusahaanModel sebagai Alias
+        // 2. Mock PerusahaanModel sebagai Alias (Penyebab utama konflik)
         $this->perusahaanModelMock = Mockery::mock('alias:'.PerusahaanModel::class);
 
         // 3. Fake Storage
         Storage::fake('public');
+
+        // 4. Mock DB Facade untuk transaction di postDelete
+        DB::shouldReceive('transaction')
+            ->byDefault()
+            ->andReturnUsing(function ($callback) {
+                $callback(); // Eksekusi closure transaction
+            });
     }
 
     protected function tearDown(): void
@@ -108,7 +116,7 @@ class PerusahaanControllerTest extends TestCase
             ->once()
             ->andReturn($this->perusahaanModelMock);
 
-        // 1) Intersep 'when' dan jalankan callback-nya (agar baris filter ke-cover)
+        // 1) Intersep 'when' dan jalankan callback-nya
         $this->perusahaanModelMock
             ->shouldReceive('when')
             ->once()
@@ -132,7 +140,7 @@ class PerusahaanControllerTest extends TestCase
                 return $this->perusahaanModelMock;
             });
 
-        // 3) Mock whereRaw & orWhereRaw → pastikan dipanggil (menandakan filter benar jalan)
+        // 3) Mock whereRaw & orWhereRaw → pastikan dipanggil
         $this->perusahaanModelMock->shouldReceive('whereRaw')->once()->andReturn($this->perusahaanModelMock);
         $this->perusahaanModelMock->shouldReceive('orWhereRaw')->once()->andReturn($this->perusahaanModelMock);
 
@@ -156,7 +164,7 @@ class PerusahaanControllerTest extends TestCase
         // Assert
         $this->assertSame($mockResponse, $response);
         $this->assertArrayHasKey('perusahaanList', $capturedProps);
-        // PENTING: panggil lazy prop supaya seluruh filter benar-benar dieksekusi
+        // Panggil lazy prop
         $this->assertSame('searchResult', $capturedProps['perusahaanList']());
     }
 
@@ -405,7 +413,7 @@ class PerusahaanControllerTest extends TestCase
     }
 
     // =========================================================================
-    // TEST METHOD: postDelete()
+    // TEST METHOD: postDelete() (DIPERBAIKI UNTUK MENGHINDARI REDECLARE MOCK)
     // =========================================================================
 
     #[Test]
@@ -427,7 +435,7 @@ class PerusahaanControllerTest extends TestCase
     #[Test]
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
-    public function post_delete_berhasil_menghapus_data()
+    public function post_delete_berhasil_menghapus_data_tanpa_logo()
     {
         $auth = (object) ['akses' => ['Perusahaan'], 'roles' => ['User']];
         $request = Request::create('/perusahaan/delete', 'POST');
@@ -436,20 +444,78 @@ class PerusahaanControllerTest extends TestCase
         $idsToDelete = ['id_1', 'id_2'];
         $request->merge(['ids' => $idsToDelete]);
 
+        // PERBAIKAN: Gunakan Mockery::mock() generik dan shouldIgnoreMissing()
+        // agar tidak berkonflik dengan alias mock PerusahaanModel di setUp().
+        $perusahaan1 = Mockery::mock()->shouldIgnoreMissing();
+        $perusahaan1->shouldReceive('delete')->once()->andReturn(true);
+        $perusahaan1->url_logo = null; // Tidak punya logo
+
+        $perusahaan2 = Mockery::mock()->shouldIgnoreMissing();
+        $perusahaan2->shouldReceive('delete')->once()->andReturn(true);
+        $perusahaan2->url_logo = null; // Tidak punya logo
+
+        $mockCollection = collect([$perusahaan1, $perusahaan2]);
+
         $this->perusahaanModelMock
             ->shouldReceive('whereIn')
             ->with('id_perusahaan', $idsToDelete)
             ->andReturn($this->perusahaanModelMock);
 
         $this->perusahaanModelMock
-            ->shouldReceive('delete')
+            ->shouldReceive('get')
             ->once()
-            ->andReturn(true);
+            ->andReturn($mockCollection);
 
         $controller = new PerusahaanController;
         $response = $controller->postDelete($request);
 
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('Data Perusahaan yang dipilih berhasil dihapus.', $response->getSession()->get('success'));
+    }
+
+    #[Test]
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function post_delete_berhasil_menghapus_data_dengan_logo()
+    {
+        $auth = (object) ['akses' => ['Perusahaan'], 'roles' => ['User']];
+        $request = Request::create('/perusahaan/delete', 'POST');
+        $request->attributes->set('auth', $auth);
+
+        $idsToDelete = ['id_logo'];
+        $request->merge(['ids' => $idsToDelete]);
+
+        $urlLogo = '/storage/uploads/logos/test-logo.jpg';
+        $pathLogo = 'uploads/logos/test-logo.jpg';
+
+        // Simulasikan file ada di storage
+        Storage::disk('public')->put($pathLogo, 'dummy content');
+        $this->assertTrue(Storage::disk('public')->exists($pathLogo)); // Sanity check
+
+        // PERBAIKAN: Gunakan Mockery::mock() generik dan shouldIgnoreMissing()
+        $perusahaanWithLogo = Mockery::mock()->shouldIgnoreMissing();
+        $perusahaanWithLogo->shouldReceive('delete')->once()->andReturn(true);
+        $perusahaanWithLogo->url_logo = $urlLogo;
+
+        $mockCollection = collect([$perusahaanWithLogo]);
+
+        $this->perusahaanModelMock
+            ->shouldReceive('whereIn')
+            ->with('id_perusahaan', $idsToDelete)
+            ->andReturn($this->perusahaanModelMock);
+
+        $this->perusahaanModelMock
+            ->shouldReceive('get')
+            ->once()
+            ->andReturn($mockCollection);
+
+        $controller = new PerusahaanController;
+        $response = $controller->postDelete($request);
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('Data Perusahaan yang dipilih berhasil dihapus.', $response->getSession()->get('success'));
+
+        // Pastikan file logo dihapus
+        $this->assertFalse(Storage::disk('public')->exists($pathLogo));
     }
 }

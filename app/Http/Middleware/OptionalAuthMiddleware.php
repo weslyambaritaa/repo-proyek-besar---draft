@@ -16,13 +16,13 @@ class OptionalAuthMiddleware
         // 1. Cek Token, tapi JANGAN redirect jika kosong
         $authToken = ToolsHelper::getAuthToken();
 
-        if (!empty($authToken)) {
+        if (! empty($authToken)) {
             // 2. Jika token ada, coba ambil data user
             $response = UserApi::getMe($authToken);
 
             if (isset($response->data->user)) {
                 $user = $response->data->user;
-                
+
                 // 3. Ambil hak akses
                 $akses = HakAksesModel::where('user_id', $user->id)->first();
                 $user->akses = isset($akses->akses) ? explode(',', $akses->akses) : [];

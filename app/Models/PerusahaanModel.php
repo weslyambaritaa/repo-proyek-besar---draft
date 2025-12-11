@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -11,10 +12,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $website
  * @property string $industri
  * @property string $deskripsi
- * @property string $url_logo
+ * @property string|null $url_logo
+ * @property int $total_jobs <-- PENTING: Untuk menghilangkan error di Controller
  */
 class PerusahaanModel extends Model
 {
+    use HasFactory;
+
     protected $table = 'm_perusahaan';
 
     protected $primaryKey = 'id_perusahaan';
@@ -23,7 +27,7 @@ class PerusahaanModel extends Model
 
     protected $keyType = 'string';
 
-    // [PERBAIKAN DISINI]
+    // [PERBAIKAN TIMESTAMP]
     // 1. Aktifkan timestamps agar created_at terisi otomatis
     public $timestamps = true;
 
@@ -38,6 +42,5 @@ class PerusahaanModel extends Model
         'industri',
         'deskripsi',
         'url_logo',
-        // created_at tidak perlu dimasukkan ke fillable jika otomatis
     ];
 }

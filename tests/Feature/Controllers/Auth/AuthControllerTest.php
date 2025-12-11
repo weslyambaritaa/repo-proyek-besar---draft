@@ -310,11 +310,9 @@ class AuthControllerTest extends TestCase
         // =====================================
         ToolsHelper::setAuthToken('previous-token');
 
-        $mockResponse = Mockery::mock(Response::class);
-        Inertia::shouldReceive('render')
-            ->once()
-            ->with('auth/logout-page')
-            ->andReturn($mockResponse);
+        // PERBAIKAN: Hapus mock Inertia karena controller redirect ke landing
+        // $mockResponse = Mockery::mock(Response::class);
+        // Inertia::shouldReceive('render')->once()->with('auth/logout-page')->andReturn($mockResponse);
 
         $controller = new AuthController;
 
@@ -326,7 +324,9 @@ class AuthControllerTest extends TestCase
         // =====================================
         // Assert (Verifikasi)
         // =====================================
-        $this->assertSame($mockResponse, $response);
+        // PERBAIKAN: Cek redirect ke landing.index
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals(route('landing.index'), $response->getTargetUrl());
         $this->assertEquals('', ToolsHelper::getAuthToken());
     }
 
@@ -380,7 +380,8 @@ class AuthControllerTest extends TestCase
         // Assert (Verifikasi)
         // =====================================
         $this->assertEquals(302, $response->getStatusCode());
-        $this->assertEquals(route('home'), $response->getTargetUrl());
+        // PERBAIKAN: Diubah ke landing.index sesuai logic di Controller baris 219
+        $this->assertEquals(route('landing.index'), $response->getTargetUrl());
     }
 
     #[Test]

@@ -85,8 +85,8 @@ export function PerusahaanDetailDialog({
                     {/* Footer Info (Created At) */}
                     <div className="text-xs text-gray-500 space-y-1">
                         <p>
-                            <span className="font-semibold">Terdaftar:</span>{" "}
-                            {dayjs(dataDetail.created_at).format("DD/MM/YYYY | HH:mm")}
+                            <span className="font-semibold">Posted:</span>{" "}
+                            {dayjs(dataDetail.created_at).format("DD/MM/YYYY")}
                         </p>
                     </div>
                 </div>

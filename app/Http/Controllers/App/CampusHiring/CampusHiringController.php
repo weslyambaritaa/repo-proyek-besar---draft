@@ -6,15 +6,15 @@ use App\Helper\ConstHelper;
 use App\Helper\ToolsHelper;
 use App\Http\Controllers\Controller;
 use App\Models\CampusHiringModel;
-use App\Models\PerusahaanModel;
-use App\Models\LamaranCampusHiringModel; // Import Model Lamaran
-use PhpOffice\PhpSpreadsheet\Spreadsheet; // Import Spreadsheet
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx; // Import Writer Excel
-use PhpOffice\PhpSpreadsheet\Style\Alignment; // Import Styling Excel
-use Illuminate\Support\Str; // Import Helper Str (PENTING untuk Str::slug)
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Inertia\Inertia;
+use App\Models\LamaranCampusHiringModel;
+use App\Models\PerusahaanModel; // Import Model Lamaran
+use Illuminate\Http\Request; // Import Spreadsheet
+use Illuminate\Support\Str; // Import Writer Excel
+use Illuminate\Validation\Rule; // Import Styling Excel
+use Inertia\Inertia; // Import Helper Str (PENTING untuk Str::slug)
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class CampusHiringController extends Controller
 {
@@ -147,64 +147,73 @@ class CampusHiringController extends Controller
     /**
      * Download Excel Data Pelamar
      */
-public function downloadApplicants($id)
+    public function downloadApplicants($id)
     {
-        // Tidak perlu "with('user')" karena nama diambil dari inputan manual
+        // Ambil data lowongan dulu
+        $campusHiring = CampusHiringModel::find($id);
+
+        // ✅ Guard: jika lowongan tidak ditemukan, jangan lanjut ke Excel / exit
+        if (! $campusHiring) {
+            return back()->with('error', 'Lowongan tidak ditemukan.');
+        }
+
         $lamaran = LamaranCampusHiringModel::where('id_campus_hiring', $id)
             ->orderBy('tanggal_lamaran', 'desc')
             ->get();
-            
-        $campusHiring = CampusHiringModel::find($id);
-        $namaJob = $campusHiring ? $campusHiring->nama_campus_hiring : 'Data';
-    
+
+        $namaJob = $campusHiring->nama_campus_hiring ?? 'Data';
+
         // Setup Spreadsheet
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
-    
+
         // Header Judul
-        $sheet->setCellValue('A1', 'Daftar Pelamar - ' . $namaJob);
+        $sheet->setCellValue('A1', 'Daftar Pelamar - '.$namaJob);
         $sheet->mergeCells('A1:D1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-    
+
         // Header Kolom
         $headers = ['No', 'Nama Pelamar', 'Link CV', 'Waktu Mendaftar'];
-        $sheet->fromArray($headers, NULL, 'A3');
+        $sheet->fromArray($headers, null, 'A3');
         $sheet->getStyle('A3:D3')->getFont()->setBold(true);
         $sheet->getStyle('A3:D3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-    
+
         // Isi Data
         $row = 4;
         foreach ($lamaran as $idx => $item) {
-            $sheet->setCellValue('A' . $row, $idx + 1);
-            
-            // AMBIL DARI INPUTAN MANUAL
-            $sheet->setCellValue('B' . $row, $item->nama_pelamar); 
-            
-            $sheet->setCellValue('C' . $row, $item->url_cv);
-            
-            // Waktu
-            $waktu = $item->tanggal_lamaran ? date('d/m/Y H:i', strtotime($item->tanggal_lamaran)) : '-';
-            $sheet->setCellValue('D' . $row, $waktu);
-            $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            
+            $sheet->setCellValue('A'.$row, $idx + 1);
+            $sheet->setCellValue('B'.$row, $item->nama_pelamar);
+            $sheet->setCellValue('C'.$row, $item->url_cv);
+
+            $waktu = $item->tanggal_lamaran
+                ? date('d/m/Y H:i', strtotime($item->tanggal_lamaran))
+                : '-';
+
+            $sheet->setCellValue('D'.$row, $waktu);
+            $sheet->getStyle('D'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
             $row++;
         }
-    
+
         foreach (range('A', 'D') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
-    
+
         $writer = new Xlsx($spreadsheet);
-        $filename = 'Pelamar_' . Str::slug($namaJob) . '_' . date('Y-m-d_His') . '.xlsx';
-    
+        $filename = 'Pelamar_'.Str::slug($namaJob).'_'.date('Y-m-d_His').'.xlsx';
+
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Disposition: attachment; filename="'.$filename.'"');
         header('Cache-Control: max-age=0');
-        
+
         $writer->save('php://output');
+        // @codeCoverageIgnoreStart
         exit;
+        // @codeCoverageIgnoreEnd
+
     }
+
     private function checkIsEditor($auth)
     {
         return ToolsHelper::checkRoles('Campus Hiring', $auth->akses);

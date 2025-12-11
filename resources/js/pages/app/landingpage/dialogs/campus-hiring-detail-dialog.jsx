@@ -1,25 +1,37 @@
-import { router } from '@inertiajs/react';
+import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { DaftarDetailDialog } from "./daftar-detail"; 
+import { toast } from "sonner"; 
 import dayjs from "dayjs";
 import "dayjs/locale/id";
-import React, { useState } from 'react';
-import { DaftarDetailDialog } from './daftar-detail'; // Import dialog baru
 
 export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail, auth }) {
-    // State untuk dialog pendaftaran form
+    // 1. PINDAHKAN HOOKS KE PALING ATAS (SEBELUM RETURN APAPUN)
     const [isDaftarDialogOpen, setIsDaftarDialogOpen] = useState(false);
 
+    // 2. BARU LAKUKAN PENGECEKAN KONDISIONAL
     if (!dataDetail) return null;
 
+    // --- Sisa logika di bawah ini aman karena dijalankan setelah hook & null check ---
+
+    // Helper convert GMT+0 → GMT+7
     const toGMT7 = (date) => dayjs(date).add(7, "hour");
 
+    // Helper cek expired
+    const isExpired = (dateString) => {
+        if (!dateString) return false;
+        const deadline = new Date(dateString);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        return today > deadline;
+    };
+
+    const expired = isExpired(dataDetail.batas_akhir);
+
+    // Helper parsing pendidikan
     let educationBadges = [];
     if (Array.isArray(dataDetail.kualifikasi_pendidikan)) {
         educationBadges = dataDetail.kualifikasi_pendidikan;
@@ -35,30 +47,35 @@ export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail
     }
 
     const handleDaftarClick = () => {
-        // Cek login
         if (!auth) {
-            router.get(route('auth.login'));
+            window.location.href = route('auth.login');
             return;
         }
-
-        // LOGIKA KHUSUS: Hanya ifs23022 yang boleh
-        if (auth.username === 'ifs23011') {
-            // Jika valid, buka dialog form pendaftaran
-            setIsDaftarDialogOpen(true);
+        if (auth.alias === 'Alumni') { 
+             setIsDaftarDialogOpen(true);
         } else {
-            alert("Akun Anda tidak cocok. Anda TIDAK BISA mendaftar.");
+             toast.error("Akun Anda tidak cocok. Anda TIDAK BISA mendaftar.");
         }
     };
 
     return (
         <>
             <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                <DialogContent aria-describedby={undefined} className="sm:max-w-[550px] bg-white p-0 gap-0 overflow-hidden border shadow-lg rounded-xl">
+                <DialogContent className="sm:max-w-[550px] bg-white p-0 gap-0 overflow-hidden border shadow-lg rounded-xl">
+
+                    {/* Bagian Konten Scrollable */}
                     <div className="p-6 pb-4 overflow-y-auto max-h-[70vh]">
+                        
+                        {/* Header Judul */}
                         <div className="mb-6">
-                            <DialogTitle className="text-2xl font-bold text-blue-950 mb-2">
+                            <DialogTitle className="text-2xl font-bold text-blue-950 mb-1">
                                 {dataDetail.nama_campus_hiring || "Nama Campus Hiring"}
                             </DialogTitle>
+                            <p className="text-blue-600 font-medium mb-3 text-sm">
+                                {dataDetail.nama_perusahaan}
+                            </p>
+
+                            {/* Looking For */}
                             <div className="flex items-center gap-2 text-sm text-slate-500">
                                 <span>Looking for</span>
                                 <div className="flex flex-wrap gap-1">
@@ -75,42 +92,51 @@ export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail
                             </div>
                         </div>
 
+                        {/* Detail */}
                         <div className="space-y-5">
                             <DetailItem label="Nama Perusahaan" value={dataDetail.nama_perusahaan} />
                             <DetailItem label="Departemen" value={dataDetail.departemen} />
-                            <DetailItem label="Jenis Lowongan" value={dataDetail.jenis_lowongan} />
+                            <DetailItem label="Lokasi" value={dataDetail.lokasi} />
                             <DetailItem label="Deskripsi" value={dataDetail.deskripsi} />
                             <DetailItem label="Kualifikasi" value={dataDetail.kualifikasi} />
                             <DetailItem label="Benefit" value={dataDetail.benefit} />
                         </div>
                     </div>
 
-                    {/* FOOTER */}
+                    {/* Footer Section */}
                     <div className="mt-2">
                         <Separator />
-                        <div className="p-6 flex items-center justify-between bg-white">
+                        <div className="p-6 flex items-end justify-between bg-white">
+
+                            {/* Info Tanggal Kiri */}
                             <div className="text-sm space-y-1">
                                 <p className="text-blue-900 font-medium">
                                     Posted {toGMT7(dataDetail.created_at).format("DD/MM/YYYY")}
                                 </p>
                                 <p className="text-red-600 font-bold">
-                                    Deadline {dataDetail.batas_akhir ? toGMT7(dataDetail.batas_akhir).format("DD/MM/YYYY") : "-"}
+                                    Deadline{" "}
+                                    {dataDetail.batas_akhir
+                                        ? toGMT7(dataDetail.batas_akhir).format("DD/MM/YYYY")
+                                        : "-"}
+                                    {expired && " (Ditutup)"}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-6"
-                                    onClick={handleDaftarClick}
-                                >
-                                    Daftar
-                                </Button>
+                            {/* Tombol Kanan */}
+                            <div className="flex gap-2">
                                 <Button
                                     variant="outline"
-                                    className="border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold px-6"
+                                    className="border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold px-4"
                                     onClick={() => setOpenDialog(false)}
                                 >
                                     Tutup
+                                </Button>
+                                <Button 
+                                    onClick={handleDaftarClick}
+                                    disabled={expired}
+                                    className={`${expired ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold px-4`}
+                                >
+                                    {expired ? 'Ditutup' : 'Daftar'}
                                 </Button>
                             </div>
                         </div>
@@ -118,12 +144,11 @@ export function CampusHiringDetailDialog({ openDialog, setOpenDialog, dataDetail
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog Form Pendaftaran (Input URL CV) */}
             <DaftarDetailDialog 
-                openDialog={isDaftarDialogOpen}
-                setOpenDialog={setIsDaftarDialogOpen}
+                openDialog={isDaftarDialogOpen} 
+                setOpenDialog={setIsDaftarDialogOpen} 
                 dataDetail={dataDetail}
-                auth={auth}
+                auth={auth} 
             />
         </>
     );

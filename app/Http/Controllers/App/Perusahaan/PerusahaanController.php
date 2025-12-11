@@ -6,9 +6,9 @@ use App\Helper\ConstHelper;
 use App\Helper\ToolsHelper;
 use App\Http\Controllers\Controller;
 use App\Models\PerusahaanModel;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PerusahaanController extends Controller

@@ -13,16 +13,16 @@ import React, { useEffect } from "react";
 import { toast } from "sonner";
 
 export function DaftarDetailDialog({ openDialog, setOpenDialog, dataDetail, auth }) {
-    if (!dataDetail) return null;
-
-    // Tambahkan field 'nama_pelamar'
+    // 1. PINDAHKAN HOOKS KE ATAS SEBELUM RETURN
+    // Gunakan optional chaining (?.) dan '|| ""' agar tidak error saat dataDetail null di awal
     const { data, setData, post, processing, errors, reset } = useForm({
-        id_campus_hiring: dataDetail.id_campus_hiring,
-        nama_pelamar: auth?.nama || "", // Default isi nama akun (opsional, bisa dikosongkan)
+        id_campus_hiring: dataDetail?.id_campus_hiring || "",
+        nama_pelamar: auth?.nama || "", 
         url_cv: "",
     });
 
     useEffect(() => {
+        // Update data form hanya jika dialog terbuka dan dataDetail tersedia
         if (openDialog && dataDetail) {
             setData({
                 id_campus_hiring: dataDetail.id_campus_hiring,
@@ -31,6 +31,9 @@ export function DaftarDetailDialog({ openDialog, setOpenDialog, dataDetail, auth
             });
         }
     }, [openDialog, dataDetail, auth]);
+
+    // 2. BARU LAKUKAN PENGECEKAN NULL
+    if (!dataDetail) return null;
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -41,7 +44,8 @@ export function DaftarDetailDialog({ openDialog, setOpenDialog, dataDetail, auth
                 setOpenDialog(false);
                 reset();
             },
-            onError: (err) => {
+            // 3. HAPUS PARAMETER 'err' YANG TIDAK DIPAKAI
+            onError: () => {
                 toast.error("Gagal mendaftar, periksa inputan Anda.");
             }
         });

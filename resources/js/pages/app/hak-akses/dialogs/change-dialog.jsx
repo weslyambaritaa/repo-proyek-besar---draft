@@ -259,7 +259,7 @@ export function HakAksesChangeDialog({
                         <div className="grid gap-3">
                             <Label htmlFor="inputHakAkses">Hak Akses</Label>
                             <div className="flex flex-col gap-6">
-                                <div className="flex flex-col gap-3">
+                               <div className="flex flex-col gap-3">
                                     {optionRoles.map((role, index) => (
                                         <Label
                                             key={`role-${index}`}
